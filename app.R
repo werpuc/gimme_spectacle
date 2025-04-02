@@ -44,7 +44,7 @@ server <- function(input, output) {
   
   observe( if(input[["run_random"]] > 0) shinyjs::show("open_spec_page") )
   
-  all_spectacles <- read.csv("spektakle_online.tsv",
+  all_spectacles <- read.csv("./data/spektakle_online.tsv",
                              header = TRUE,
                              sep = "\t") %>%
     mutate(if_musical = as.numeric(if_musical),
