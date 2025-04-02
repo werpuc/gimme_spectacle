@@ -1,12 +1,14 @@
 library(shiny)
 library(bslib)
-library(googlesheets4)
+# library(googlesheets4)
 library(dplyr)
 library(glue)
+library(shinyjs)
 
 # Define UI for app that draws a histogram ----
 ui <- page_sidebar(
-  title = "Gimmi spectacle!",
+  title = "Gimme spectacle!",
+  useShinyjs(),
   # Sidebar panel for inputs ----
   sidebar = sidebar(
    checkboxInput(
@@ -26,14 +28,21 @@ ui <- page_sidebar(
    ),
    actionButton(
      inputId = "run_random",
-     label = "Gimmi!"
+     label = "Gimme!"
    )
   ),
-  verbatimTextOutput(outputId = "spectacle")
+  verbatimTextOutput(outputId = "spectacle"),
+  shinyjs::hidden(
+    uiOutput("open_spec_page")
+  )
 )
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
+  
+  # observe( if(input[["run_random"]] == 0) shinyjs::hide("open_page") )
+  
+  observe( if(input[["run_random"]] > 0) shinyjs::show("open_spec_page") )
   
   all_spectacles <- read.csv("spektakle_online.tsv",
                              header = TRUE,
@@ -88,12 +97,20 @@ server <- function(input, output) {
       
     } else ""
     
+  })
+  
+
+  
+  output[["open_spec_page"]] <- renderUI({
     
+    actionButton(
+        inputId = "open_page",
+        label = "Show more!",
+        onclick = paste0("window.open('", spectacle_random()[["link"]] , "')" )
+      )
     
     
   })
-  
-  
   
 }
 
