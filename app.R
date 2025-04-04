@@ -1,20 +1,20 @@
 library(shiny)
 library(bslib)
-# library(googlesheets4)
 library(dplyr)
 library(glue)
 library(shinyjs)
+library(DT)
 
-# Define UI for app that draws a histogram ----
 ui <- page_sidebar(
   title = "Gimme spectacle!",
   useShinyjs(),
   # Sidebar panel for inputs ----
   sidebar = sidebar(
-   checkboxInput(
+    checkboxGroupInput(
      inputId = "if_female",
      label = "Female director?",
-     value = TRUE
+     choices = c(TRUE, FALSE),
+     selected = TRUE
    ),
    checkboxInput(
      inputId = "if_english",
@@ -31,13 +31,24 @@ ui <- page_sidebar(
      label = "Gimme!"
    )
   ),
-  verbatimTextOutput(outputId = "spectacle"),
-  shinyjs::hidden(
-    uiOutput("open_spec_page")
+  navset_pill(
+    nav_panel(
+      title = "one", 
+      br(),
+      verbatimTextOutput(outputId = "spectacle"),
+      shinyjs::hidden(
+        uiOutput("open_spec_page")
+      )
+    ),
+    nav_panel(
+      title = "all", 
+      br(),
+      DT::dataTableOutput(outputId = "all_spectacles")
+    )
   )
+  
 )
 
-# Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
   # observe( if(input[["run_random"]] == 0) shinyjs::hide("open_page") )
@@ -55,16 +66,12 @@ server <- function(input, output) {
     
     all_spectacles %>%
       filter(if_musical == input[["if_musical"]],
-             if_female == input[["if_female"]],
+             if_female %in% as.logical(input[["if_female"]]),
              if_english == input[["if_english"]])
     
   })
   
-  n_opts <- reactive({
-    
-    nrow(filtered())
-    
-    })
+  n_opts <- reactive({ nrow(filtered()) })
   
   n_random <- reactive({
     
@@ -85,7 +92,6 @@ server <- function(input, output) {
   output[["spectacle"]] <- renderText({
     
     if(input[["run_random"]] > 0) {
-      # paste0("Spectacle: ", spectacle_random()[["title"]])
       
       glue::glue_data(spectacle_random(), 
                       "Spectacle: {title}
@@ -112,6 +118,13 @@ server <- function(input, output) {
     
   })
   
+  output[["all_spectacles"]] <- DT::renderDataTable({
+    
+    filtered() %>%
+      select(title, director, length, comments, famous.names, link) %>%
+      arrange(title)
+    
+  })
 }
 
 shinyApp(ui = ui, server = server)
